@@ -1,0 +1,38 @@
+.
+├── .DS_Store
+├── .env
+├── .flutter-plugins-dependencies
+├── .gitignore
+├── .metadata
+├── README.md
+├── analysis_options.yaml
+├── assets
+│   └── icon
+│       └── wallet.png
+├── expedge_admin_dashboard.iml
+├── flutter_01.log
+├── flutter_02.log
+├── lib
+│   ├── core
+│   │   └── config
+│   │       └── supabase_config.dart
+│   ├── main.dart
+│   ├── models
+│   │   └── organization.dart
+│   ├── screens
+│   │   ├── dashboard_screen.dart
+│   │   └── login_screen.dart
+│   ├── services
+│   │   └── admin_service.dart
+│   └── widgets
+│       ├── activate_subscription_dialog.dart
+│       ├── add_organization_dialog.dart
+│       ├── edit_limits_dialog.dart
+│       ├── extend_trial_dialog.dart
+│       ├── reset_password_dialog.dart
+│       └── stats_card.dart
+├── pubspec.lock
+├── pubspec.yaml
+└── structure.txt
+
+10 directories, 26 files

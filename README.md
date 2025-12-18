@@ -18,3 +18,5 @@ cd /path/to/build/web
 # Node.js (if you have it)
 npx http-server -p 8080
 
+# generate tree structure
+tree -a -I '.dart_tool|.idea|android|ios|web|macos|windows|build|.git' > structure.txt
