@@ -40,7 +40,7 @@ class Organization {
       id: json['id'],
       name: json['name'],
       email: json['email'],
-      phone: json['phone'],
+      phone: json['phone'] ?? '--',
       subscriptionStatus: json['subscription_status'] ?? 'trial',
       subscriptionPlan: json['subscription_plan'] ?? 'basic',
       trialEndDate: json['trial_end_date'] != null 

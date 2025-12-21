@@ -1,3 +1,4 @@
+import 'package:expedge_admin_dashboard/screens/revenue_dashboard_screen.dart';
 import 'package:expedge_admin_dashboard/widgets/add_organization_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import '../widgets/extend_trial_dialog.dart';
 import '../widgets/activate_subscription_dialog.dart';
 import '../widgets/edit_limits_dialog.dart';
 import '../widgets/reset_password_dialog.dart';
+import '../widgets/add_user_dialog.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -82,287 +84,319 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Exp Edge Admin Dashboard'),
-        actions: [
-          ElevatedButton.icon(
-            onPressed: () async {
-              await showDialog(
-                context: context,
-                builder: (_) => AddOrganizationDialog(),
-              );
-              _loadData(); // Refresh list
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Add Organization'),
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadData,
-            tooltip: 'Refresh',
-          ),
-        ],
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Exp Edge Admin Dashboard'),
+          actions: [
+              // Revenue Dashboard Button
+      TextButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const RevenueDashboardScreen(),
+            ),
+          );
+        },
+        icon: const Icon(Icons.analytics),
+        label: const Text(
+          'Revenue',
+        ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Statistics Cards
-                  if (_stats != null) ...[
+      const SizedBox(width: 16),
+            ElevatedButton.icon(
+              onPressed: () async {
+                await showDialog(
+                  context: context,
+                  builder: (_) => AddOrganizationDialog(),
+                );
+                _loadData(); // Refresh list
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Add Organization'),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _loadData,
+              tooltip: 'Refresh',
+            ),
+          ],
+        ),
+        body: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Statistics Cards
+                    if (_stats != null) ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: StatsCard(
+                              title: 'Total Clients',
+                              value: _stats!['total_clients'].toString(),
+                              icon: Icons.business,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: StatsCard(
+                              title: 'Active Clients',
+                              value: _stats!['active_clients'].toString(),
+                              icon: Icons.check_circle,
+                              color: Colors.green,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: StatsCard(
+                              title: 'Trial Clients',
+                              value: _stats!['trial_clients'].toString(),
+                              icon: Icons.timer,
+                              color: Colors.orange,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: StatsCard(
+                              title: 'Expired',
+                              value: _stats!['expired_clients'].toString(),
+                              icon: Icons.warning,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                    ],
+      
+                    // Filters and Search
                     Row(
                       children: [
                         Expanded(
-                          child: StatsCard(
-                            title: 'Total Clients',
-                            value: _stats!['total_clients'].toString(),
-                            icon: Icons.business,
-                            color: Colors.blue,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: StatsCard(
-                            title: 'Active Clients',
-                            value: _stats!['active_clients'].toString(),
-                            icon: Icons.check_circle,
-                            color: Colors.green,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: StatsCard(
-                            title: 'Trial Clients',
-                            value: _stats!['trial_clients'].toString(),
-                            icon: Icons.timer,
-                            color: Colors.orange,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: StatsCard(
-                            title: 'Expired',
-                            value: _stats!['expired_clients'].toString(),
-                            icon: Icons.warning,
-                            color: Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                  ],
-
-                  // Filters and Search
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          onChanged: (value) {
-                            setState(() => _searchQuery = value);
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Search clients...',
-                            prefixIcon: const Icon(Icons.search),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      DropdownButton<String>(
-                        value: _filterStatus,
-                        items: const [
-                          DropdownMenuItem(value: 'all', child: Text('All')),
-                          DropdownMenuItem(
-                              value: 'active', child: Text('Active')),
-                          DropdownMenuItem(
-                              value: 'trial', child: Text('Trial')),
-                          DropdownMenuItem(
-                              value: 'expired', child: Text('Expired')),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _filterStatus = value);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Clients Table
-                  Text(
-                    'Clients (${_filteredOrganizations.length})',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    height: 600,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: DataTable2(
-                      columnSpacing: 12,
-                      horizontalMargin: 12,
-                      minWidth: 1200,
-                      columns: const [
-                        DataColumn2(
-                            label: Text('Organization'), size: ColumnSize.L),
-                        DataColumn2(label: Text('Email'), size: ColumnSize.L),
-                        DataColumn2(label: Text('Status'), size: ColumnSize.S),
-                        DataColumn2(label: Text('Plan'), size: ColumnSize.S),
-                        DataColumn2(
-                            label: Text('Days Left'), size: ColumnSize.S),
-                        DataColumn2(label: Text('Sites'), size: ColumnSize.S),
-                        DataColumn2(
-                            label: Text('Expenses'), size: ColumnSize.S),
-                        DataColumn2(label: Text('Storage'), size: ColumnSize.S),
-                        DataColumn2(label: Text('Actions'), size: ColumnSize.L),
-                      ],
-                      rows: _filteredOrganizations.map((org) {
-                        return DataRow(
-                          cells: [
-                            DataCell(
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    org.name,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    DateFormat('dd MMM yyyy')
-                                        .format(org.createdAt),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
+                          child: TextField(
+                            onChanged: (value) {
+                              setState(() => _searchQuery = value);
+                            },
+                            decoration: InputDecoration(
+                              hintText: 'Search clients...',
+                              prefixIcon: const Icon(Icons.search),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            DataCell(Text(org.email)),
-                            DataCell(_buildStatusChip(org)),
-                            DataCell(Text(org.subscriptionPlan.toUpperCase())),
-                            DataCell(
-                              Text(
-                                '${org.daysLeft} days',
-                                style: TextStyle(
-                                  color: org.daysLeft < 3 ? Colors.red : null,
-                                  fontWeight:
-                                      org.daysLeft < 3 ? FontWeight.bold : null,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        DropdownButton<String>(
+                          value: _filterStatus,
+                          items: const [
+                            DropdownMenuItem(value: 'all', child: Text('All')),
+                            DropdownMenuItem(
+                                value: 'active', child: Text('Active')),
+                            DropdownMenuItem(
+                                value: 'trial', child: Text('Trial')),
+                            DropdownMenuItem(
+                                value: 'expired', child: Text('Expired')),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setState(() => _filterStatus = value);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+      
+                    // Clients Table
+                    Text(
+                      'Clients (${_filteredOrganizations.length})',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 600,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: DataTable2(
+                        columnSpacing: 12,
+                        horizontalMargin: 12,
+                        minWidth: 1200,
+                        columns: const [
+                          DataColumn2(
+                              label: Text('Organization'), size: ColumnSize.L),
+                          DataColumn2(label: Text('Email'), size: ColumnSize.L),
+                          DataColumn2(label: Text('Status'), size: ColumnSize.S),
+                          DataColumn2(label: Text('Plan'), size: ColumnSize.S),
+                          DataColumn2(
+                              label: Text('Days Left'), size: ColumnSize.S),
+                          DataColumn2(label: Text('Sites'), size: ColumnSize.S),
+                          DataColumn2(
+                              label: Text('Expenses'), size: ColumnSize.S),
+                          DataColumn2(label: Text('Storage'), size: ColumnSize.S),
+                          DataColumn2(label: Text('Actions'), size: ColumnSize.L),
+                        ],
+                        rows: _filteredOrganizations.map((org) {
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      org.name,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    Text(
+                                      DateFormat('dd MMM yyyy')
+                                          .format(org.createdAt),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                            DataCell(Text('${org.totalSites}/${org.maxSites}')),
-                            DataCell(Text(
-                                '${org.totalExpenses}/${org.maxExpenses}')),
-                            DataCell(Text(
-                                '${org.storageUsedMb.toStringAsFixed(1)} MB')),
-                            DataCell(
-                              PopupMenuButton(
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(
-                                    value: 'extend_trial',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.timer_outlined),
-                                        SizedBox(width: 8),
-                                        Text('Extend Trial'),
-                                      ],
-                                    ),
+                              DataCell(Text(org.email)),
+                              DataCell(_buildStatusChip(org)),
+                              DataCell(Text(org.subscriptionPlan.toUpperCase())),
+                              DataCell(
+                                Text(
+                                  '${org.daysLeft} days',
+                                  style: TextStyle(
+                                    color: org.daysLeft < 3 ? Colors.red : null,
+                                    fontWeight:
+                                        org.daysLeft < 3 ? FontWeight.bold : null,
                                   ),
-                                  const PopupMenuItem(
-                                    value: 'activate',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.check_circle_outline),
-                                        SizedBox(width: 8),
-                                        Text('Activate Subscription'),
-                                      ],
-                                    ),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'extend_subscription',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.calendar_today),
-                                        SizedBox(width: 8),
-                                        Text('Extend Subscription'),
-                                      ],
-                                    ),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'edit_limits',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.settings_outlined),
-                                        SizedBox(width: 8),
-                                        Text('Edit Limits'),
-                                      ],
-                                    ),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: 'reset_password',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.lock_reset,
-                                            color: Colors.orange),
-                                        SizedBox(width: 8),
-                                        Text('Reset Password',
-                                            style: TextStyle(
-                                                color: Colors.orange)),
-                                      ],
-                                    ),
-                                  ),
-                                  if (org.isActive)
-                                    const PopupMenuItem(
-                                      value: 'suspend',
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.block, color: Colors.red),
-                                          SizedBox(width: 8),
-                                          Text('Suspend',
-                                              style:
-                                                  TextStyle(color: Colors.red)),
-                                        ],
-                                      ),
-                                    )
-                                  else
-                                    const PopupMenuItem(
-                                      value: 'reactivate',
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.check,
-                                              color: Colors.green),
-                                          SizedBox(width: 8),
-                                          Text('Reactivate'),
-                                        ],
-                                      ),
-                                    ),
-                                ],
-                                onSelected: (value) =>
-                                    _handleAction(value, org),
+                                ),
                               ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
+                              DataCell(Text('${org.totalSites}/${org.maxSites}')),
+                              DataCell(Text(
+                                  '${org.totalExpenses}/${org.maxExpenses}')),
+                              DataCell(Text(
+                                  '${org.storageUsedMb.toStringAsFixed(1)} MB')),
+                              DataCell(
+                                PopupMenuButton(
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      value: 'extend_trial',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.timer_outlined),
+                                          SizedBox(width: 8),
+                                          Text('Extend Trial'),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'activate',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.check_circle_outline),
+                                          SizedBox(width: 8),
+                                          Text('Activate Subscription'),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'extend_subscription',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.calendar_today),
+                                          SizedBox(width: 8),
+                                          Text('Extend Subscription'),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'edit_limits',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.settings_outlined),
+                                          SizedBox(width: 8),
+                                          Text('Edit Limits'),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'reset_password',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.lock_reset,
+                                              color: Colors.orange),
+                                          SizedBox(width: 8),
+                                          Text('Reset Password',
+                                              style: TextStyle(
+                                                  color: Colors.orange)),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuItem(
+                                      value: 'add_user',
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.person_add_outlined,
+                                              color: Colors.blue),
+                                          SizedBox(width: 8),
+                                          Text('Add User',
+                                              style:
+                                                  TextStyle(color: Colors.blue)),
+                                        ],
+                                      ),
+                                    ),
+                                  
+                                    if (org.isActive)
+                                      const PopupMenuItem(
+                                        value: 'suspend',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.block, color: Colors.red),
+                                            SizedBox(width: 8),
+                                            Text('Suspend',
+                                                style:
+                                                    TextStyle(color: Colors.red)),
+                                          ],
+                                        ),
+                                      )
+                                    else
+                                      const PopupMenuItem(
+                                        value: 'reactivate',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.check,
+                                                color: Colors.green),
+                                            SizedBox(width: 8),
+                                            Text('Reactivate'),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                  onSelected: (value) =>
+                                      _handleAction(value, org),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 
@@ -416,16 +450,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           }
           break;
 
-         case 'reset_password':
-        final newPassword = await showDialog<String>(
-          context: context,
-          builder: (_) => ResetPasswordDialog(organization: org),
-        );
-        if (newPassword != null) {
-          _showSuccess('Password reset successfully');
-        }
-        break;
-
+        case 'reset_password':
+          final newPassword = await showDialog<String>(
+            context: context,
+            builder: (_) => ResetPasswordDialog(organization: org),
+          );
+          if (newPassword != null) {
+            _showSuccess('Password reset successfully');
+          }
+          break;
 
         case 'activate':
           final result = await showDialog<Map<String, dynamic>>(
@@ -474,6 +507,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             _showSuccess('Limits updated');
           }
           break;
+        case 'add_user':
+          final result = await showDialog(
+            context: context,
+            builder: (_) => AddUserDialog(organization: org),
+          );
+          if (result == true) {
+            _showSuccess('User invite created successfully');
+          }
+          break;
+
 
         case 'suspend':
           final confirm =
@@ -495,7 +538,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       _showError('Error: $e');
     }
   }
-
 
   Future<bool> _showConfirmDialog(String message) async {
     return await showDialog<bool>(
